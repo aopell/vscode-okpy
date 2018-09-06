@@ -34,6 +34,10 @@ export function activate(context: vscode.ExtensionContext) {
             okterm.sendText(`python3 ok`);
         }),
         vscode.commands.registerCommand('okpy.submit', async () => {
+            let result = await vscode.window.showWarningMessage("Are you sure you want to submit your assignment?", {modal: true}, "Yes", "No");
+            if(!result || result === "No") {
+                return;
+            }
             let okterm = getTerminal();
             okterm.sendText(`python3 ok --submit`);
         })
