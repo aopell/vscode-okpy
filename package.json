@@ -1,7 +1,7 @@
 {
-    "name": "vscode-prompt-args",
-    "displayName": "VSCode Prompt for Arguments",
-    "description": "Provides prompts for arguments in task and debug config files",
+    "name": "vscode-okpy",
+    "displayName": "VSCode okpy",
+    "description": "Provides support for the ok Python autograder",
     "version": "0.0.1",
     "publisher": "aopell",
     "engines": {
@@ -11,17 +11,42 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.sayHello"
+        "onCommand:okpy.question",
+        "onCommand:okpy.questionUnlock",
+        "onCommand:okpy.allUnlock",
+        "onCommand:okpy.all",
+        "onCommand:okpy.submit"
     ],
-    "main": "./out/extension",
     "contributes": {
-        "commands": [
+        "commands":[
             {
-                "command": "extension.sayHello",
-                "title": "Hello World"
+                "command": "okpy.question",
+                "title": "Grade Question",
+                "category": "OK"
+            },
+            {
+                "command": "okpy.questionUnlock",
+                "title": "Unlock Question",
+                "category": "OK"
+            },
+            {
+                "command": "okpy.allUnlock",
+                "title": "Unlock All",
+                "category": "OK"
+            },
+            {
+                "command": "okpy.all",
+                "title": "Grade All",
+                "category": "OK"
+            },
+            {
+                "command": "okpy.submit",
+                "title": "Submit",
+                "category": "OK"
             }
         ]
     },
+    "main": "./out/extension",
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
