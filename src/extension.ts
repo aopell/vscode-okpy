@@ -34,8 +34,8 @@ export function activate(context: vscode.ExtensionContext) {
             okterm.sendText(`python3 ok`);
         }),
         vscode.commands.registerCommand('okpy.submit', async () => {
-            let result = await vscode.window.showWarningMessage("Are you sure you want to submit your assignment?", {modal: true}, "Yes", "No");
-            if(!result || result === "No") {
+            let result = await vscode.window.showWarningMessage("Are you sure you want to submit your assignment?", { modal: true }, "Yes", "No");
+            if (!result || result === "No") {
                 return;
             }
             let okterm = getTerminal();
@@ -59,15 +59,26 @@ async function getQuestion() {
     let throwErr = false;
     try {
         if (okFile) {
-            let obj = JSON.parse(readFileSync(path.join(dir,okFile), 'utf8'));
+            let obj = JSON.parse(readFileSync(path.join(dir, okFile), 'utf8'));
             let tests = Object.keys(obj.tests);
+            let additionalTests: string[] = [];
             for (let i = 0; i < tests.length; i++) {
                 let matches = tests[i].match(/(.*\/)?(\w+).py:?(\w+)?/)!;
-                tests[i] = matches[3] || matches[2];
+                if (matches[3]) {
+                    tests[i] = matches[3];
+                } else if (matches[2] && obj.tests[tests[i]] === "ok_test") {
+                    tests[i] = matches[2];
+                } else {
+                    let content = readFileSync(path.join(dir, `${matches[2]}.py`), 'utf8');
+                    additionalTests = getMatches(content, /^def (\w+)\(/mg, 1);
+                    tests.splice(i);
+                    i--;
+                }
             }
+            tests.push(...additionalTests);
 
             const test = await vscode.window.showQuickPick(tests);
-            if(!test) {
+            if (!test) {
                 throwErr = true;
                 throw new Error("No question provided");
             }
@@ -75,7 +86,7 @@ async function getQuestion() {
         }
     }
     catch (err) {
-        if(throwErr) {
+        if (throwErr) {
             throw err;
         } else {
             console.error(err);
@@ -171,6 +182,16 @@ function getCwd() {
 }
 
 // ### END https://github.com/Tyriar/vscode-terminal-here ###
+
+// https://stackoverflow.com/a/14210948
+function getMatches(string: string, regex: RegExp, index: number = 0) {
+    var matches = [];
+    var match;
+    while (match = regex.exec(string)) {
+        matches.push(match[index]);
+    }
+    return matches;
+}
 
 // this method is called when your extension is deactivated
 export function deactivate() {
