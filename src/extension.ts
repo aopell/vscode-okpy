@@ -48,6 +48,10 @@ export function activate(context: vscode.ExtensionContext) {
     }
 }
 
+interface QuickPickTestItem extends vscode.QuickPickItem {
+    test: string;
+}
+
 async function getQuestion() {
 
     let dir = getCwd();
@@ -60,36 +64,46 @@ async function getQuestion() {
     try {
         if (okFile) {
             let obj = JSON.parse(readFileSync(path.join(dir, okFile), 'utf8'));
-            let tests = Object.keys(obj.tests);
-            let additionalTests: string[] = [];
+            let testStrings = Object.keys(obj.tests);
+            let tests: QuickPickTestItem[] = testStrings.map(function(x) {
+                return {label: x, description: " - ok test", test: x};
+            });
+            let additionalTests: QuickPickTestItem[] = [];
             for (let i = 0; i < tests.length; i++) {
-                let matches = tests[i].match(/(.*\/)?(\w+).py:?(\w+)?/)!;
+                let matches = tests[i].label.match(/(.*\/)?(\w+).py:?(\w+)?/)!;
                 if (matches[3]) {
-                    tests[i] = matches[3];
-                } else if (matches[2] && obj.tests[tests[i]] === "ok_test") {
-                    tests[i] = matches[2];
+                    tests[i].label = "$(code) " + matches[3];
+                    tests[i].test = matches[3];
+                    tests[i].description = matches[2] + ".py - doctest";
+                } else if (matches[2] && obj.tests[tests[i].label] === "ok_test") {
+                    tests[i].label = "$(list-unordered) " +  matches[2];
+                    tests[i].test = matches[2];
+                    tests[i].description = (matches[1] || "") + matches[2] + ".py - ok test";
                 } else {
                     let content = readFileSync(path.join(dir, `${matches[2]}.py`), 'utf8');
-                    additionalTests = getMatches(content, /^def (\w+)\(/mg, 1);
-                    tests.splice(i);
+                    additionalTests.push(...getMatches(content, /^def (\w+)\(/mg, 1).map(function(x) {
+                        return {label: "$(code) " + x, description: `${matches[2]}.py - doctest`, test: x};
+                    }));
+                    tests.splice(i, 1);
                     i--;
                 }
             }
+
             tests.push(...additionalTests);
 
-            const test = await vscode.window.showQuickPick(tests);
+            const test = await vscode.window.showQuickPick(tests, {matchOnDescription: true});
             if (!test) {
                 throwErr = true;
                 throw new Error("No question provided");
             }
-            return test;
+            return test.test;
         }
     }
     catch (err) {
         if (throwErr) {
             throw err;
         } else {
-            console.error(err);
+            vscode.window.showErrorMessage(err);
         }
     }
 

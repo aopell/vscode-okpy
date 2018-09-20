@@ -8,24 +8,24 @@ This extension contributes the following commands:
 
 ![Commands](img/commands.png)
 
-### `okpy.question` - OK: Grade Question
+### `okpy.question` - **OK: Grade Question**
 Grade a specific question only
 
 Equivalent shell command: `python3 ok -q <question>`
-### `okpy.all` - OK: Grade All
+### `okpy.all` - **OK: Grade All**
 Grade entire assignment
 
 Equivalent shell command: `python3 ok`
 
-### `okpy.questionUnlock` - OK: Unlock Question
+### `okpy.questionUnlock` - **OK: Unlock Question**
 Unlock a question 
  
 Equivalent shell command: `python3 ok -q <question> -u`
-### `okpy.allUnlock` [OK: Unlock All]
+### `okpy.allUnlock` **OK: Unlock All**
 Unlock entire assignment 
  
 Equivalent shell command: `python3 ok -u`
-### `okpy.submit` OK: Submit
+### `okpy.submit` **OK: Submit**
 Submit assignment 
 
 Equivalent shell command: `python3 ok --submit`
@@ -36,6 +36,19 @@ Calling out known issues can help limit users opening duplicate issues against y
 
 ## Release Notes
 
+### 1.1.1
+
+- Fixed issue with grading questions
+
+### 1.1.0
+
+- Added icons and more detail to QuickPick
+- Fixed issue with adding tests to QuickPick
+
+### 1.0.1
+
+- QuickPick containing all possible OK questions
+
 ### 1.0.0
 
-Initial release
+- Initial release
