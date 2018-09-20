@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
             okterm.sendText(`python3 ok -q ${result}`);
         }),
         vscode.commands.registerCommand('okpy.questionUnlock', async () => {
-            let result = await getQuestion();
+            let result = await getQuestion(true);
             let okterm = getTerminal();
             okterm.sendText(`python3 ok -q ${result} -u`);
         }),
@@ -52,7 +52,7 @@ interface QuickPickTestItem extends vscode.QuickPickItem {
     test: string;
 }
 
-async function getQuestion() {
+async function getQuestion(locked = false) {
 
     let dir = getCwd();
     if (!dir) {
@@ -65,8 +65,8 @@ async function getQuestion() {
         if (okFile) {
             let obj = JSON.parse(readFileSync(path.join(dir, okFile), 'utf8'));
             let testStrings = Object.keys(obj.tests);
-            let tests: QuickPickTestItem[] = testStrings.map(function(x) {
-                return {label: x, description: " - ok test", test: x};
+            let tests: QuickPickTestItem[] = testStrings.map(function (x) {
+                return { label: x, description: " - ok test", test: x };
             });
             let additionalTests: QuickPickTestItem[] = [];
             for (let i = 0; i < tests.length; i++) {
@@ -76,13 +76,20 @@ async function getQuestion() {
                     tests[i].test = matches[3];
                     tests[i].description = matches[2] + ".py - doctest";
                 } else if (matches[2] && obj.tests[tests[i].label] === "ok_test") {
-                    tests[i].label = "$(list-unordered) " +  matches[2];
-                    tests[i].test = matches[2];
-                    tests[i].description = (matches[1] || "") + matches[2] + ".py - ok test";
+                    let content = readFileSync(path.join(dir, `${(matches[1] || "") + matches[2]}.py`));
+                    let testLocked = content.includes("'locked': True");
+                    if (locked !== testLocked) {
+                        tests.splice(i, 1);
+                        i--;
+                    } else {
+                        tests[i].label = (testLocked ? "$(lock) " : "$(list-unordered) ") + matches[2];
+                        tests[i].test = matches[2];
+                        tests[i].description = (matches[1] || "") + matches[2] + ".py - ok test";
+                    }
                 } else {
                     let content = readFileSync(path.join(dir, `${matches[2]}.py`), 'utf8');
-                    additionalTests.push(...getMatches(content, /^def (\w+)\(/mg, 1).map(function(x) {
-                        return {label: "$(code) " + x, description: `${matches[2]}.py - doctest`, test: x};
+                    additionalTests.push(...getMatches(content, /^def (\w+)\(/mg, 1).map(function (x) {
+                        return { label: "$(code) " + x, description: `${matches[2]}.py - doctest`, test: x };
                     }));
                     tests.splice(i, 1);
                     i--;
@@ -91,12 +98,16 @@ async function getQuestion() {
 
             tests.push(...additionalTests);
 
-            const test = await vscode.window.showQuickPick(tests, {matchOnDescription: true});
-            if (!test) {
-                throwErr = true;
-                throw new Error("No question provided");
+            if (tests.length > 0) {
+                const test = await vscode.window.showQuickPick(tests, { matchOnDescription: true });
+                if (!test) {
+                    throwErr = true;
+                    throw new Error("No question provided");
+                }
+                return test.test;
+            } else {
+                throw new Error(`There are no ${!locked ? "un" : ""}locked tests`);
             }
-            return test.test;
         }
     }
     catch (err) {

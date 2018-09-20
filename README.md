@@ -29,26 +29,3 @@ Equivalent shell command: `python3 ok -u`
 Submit assignment 
 
 Equivalent shell command: `python3 ok --submit`
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-### 1.1.1
-
-- Fixed issue with grading questions
-
-### 1.1.0
-
-- Added icons and more detail to QuickPick
-- Fixed issue with adding tests to QuickPick
-
-### 1.0.1
-
-- QuickPick containing all possible OK questions
-
-### 1.0.0
-
-- Initial release
