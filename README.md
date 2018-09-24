@@ -13,7 +13,7 @@ Grade a specific question only
 
 Equivalent shell command: `python3 ok -q <question>`
 ### `okpy.all` - **OK: Grade All**
-Grade entire assignment
+Grade the entire assignment
 
 Equivalent shell command: `python3 ok`
 
@@ -21,11 +21,15 @@ Equivalent shell command: `python3 ok`
 Unlock a question 
  
 Equivalent shell command: `python3 ok -q <question> -u`
-### `okpy.allUnlock` **OK: Unlock All**
-Unlock entire assignment 
+### `okpy.allUnlock` - **OK: Unlock All**
+Unlock the entire assignment 
  
 Equivalent shell command: `python3 ok -u`
-### `okpy.submit` **OK: Submit**
-Submit assignment 
+### `okpy.submit` - **OK: Submit Assignment**
+Submit the assignment 
 
 Equivalent shell command: `python3 ok --submit`
+### `okpy.revise` - **OK: Revise Assignment**
+Submit a revision to an assignment 
+
+Equivalent shell command: `python3 ok --revise`

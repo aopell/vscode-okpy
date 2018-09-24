@@ -1,9 +1,16 @@
 # Changelog
 
+## 1.3.0 - 2018-09-24
+### Added
+- Support for revise command (`python3 ok --revise`) with new command `OK: Revise Assignment [okpy.revise]`
+
 ## 1.2.0 - 2018-09-20
 ### Added
 - QuickPick for "Grade Question" command only shows unlocked tests
 - QuickPick for "Unlock Question" command only shows locked tests 
+### Changed
+- When submitting or revising an assignment, the confirmation dialog's default action is now `Cancel`
+- `OK: Submit` has been renamed to `OK: Submit Assignment`
 
 ## 1.1.1
 ### Fixed

@@ -34,12 +34,36 @@ export function activate(context: vscode.ExtensionContext) {
             okterm.sendText(`python3 ok`);
         }),
         vscode.commands.registerCommand('okpy.submit', async () => {
-            let result = await vscode.window.showWarningMessage("Are you sure you want to submit your assignment?", { modal: true }, "Yes", "No");
-            if (!result || result === "No") {
+            let result = await vscode.window.showWarningMessage("Are you sure you want to submit your assignment?", { modal: true },
+                {
+                    title: "Cancel",
+                    isCloseAffordance: true
+                },
+                {
+                    title: "Submit",
+                }
+            );
+            if (!result || result.title === "Cancel") {
                 return;
             }
             let okterm = getTerminal();
             okterm.sendText(`python3 ok --submit`);
+        }),
+        vscode.commands.registerCommand('okpy.revise', async () => {
+            let result = await vscode.window.showWarningMessage("Are you sure you want to submit a revision to your assignment?", { modal: true },
+                {
+                    title: "Cancel",
+                    isCloseAffordance: true
+                },
+                {
+                    title: "Revise",
+                }
+            );
+            if (!result || result.title === "Cancel") {
+                return;
+            }
+            let okterm = getTerminal();
+            okterm.sendText(`python3 ok --revise`);
         })
     ];
 
