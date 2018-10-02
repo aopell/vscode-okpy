@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0 - 2018-10-02
+### Added
+- Support for doctests of class methods
+
 ## 1.3.0 - 2018-09-24
 ### Added
 - Support for revise command (`python3 ok --revise`) with new command `OK: Revise Assignment [okpy.revise]`

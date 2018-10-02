@@ -94,7 +94,7 @@ async function getQuestion(locked = false) {
             });
             let additionalTests: QuickPickTestItem[] = [];
             for (let i = 0; i < tests.length; i++) {
-                let matches = tests[i].label.match(/(.*\/)?(\w+).py:?(\w+)?/)!;
+                let matches = tests[i].label.match(/(.*\/)?(\w+).py:?([\w\.]+)?/)!;
                 if (matches[3]) {
                     tests[i].label = "$(code) " + matches[3];
                     tests[i].test = matches[3];
@@ -111,10 +111,27 @@ async function getQuestion(locked = false) {
                         tests[i].description = (matches[1] || "") + matches[2] + ".py - ok test";
                     }
                 } else {
-                    let content = readFileSync(path.join(dir, `${matches[2]}.py`), 'utf8');
-                    additionalTests.push(...getMatches(content, /^def (\w+)\(/mg, 1).map(function (x) {
-                        return { label: "$(code) " + x, description: `${matches[2]}.py - doctest`, test: x };
-                    }));
+                    let lines = readFileSync(path.join(dir, `${matches[2]}.py`), 'utf8').toString().split("\n");
+
+                    let prevIndent = 0;
+                    let currentClass = "";
+                    for (let l of lines) {
+                        let indent = (l.match(/^[ \t]+/) || [""])[0].length;
+                        let className = (l.match(/class (\w+)/) || ["", ""])[1];
+                        let funcName = (l.match(/def (\w+)/) || ["", ""])[1];
+                        if (indent === 0) {
+                            currentClass = "";
+                            if (className) {
+                                currentClass = className;
+                            } else if (funcName) {
+                                additionalTests.push({ label: "$(code) " + funcName, description: `${matches[2]}.py - doctest`, test: funcName });
+                            }
+                        } else if (prevIndent < indent && currentClass && funcName) {
+                            additionalTests.push({ label: `$(code) ${currentClass}.${funcName}`, description: `${matches[2]}.py - doctest`, test: `${currentClass}.${funcName}` });
+                        }
+
+                        prevIndent = indent;
+                    }
                     tests.splice(i, 1);
                     i--;
                 }
@@ -231,16 +248,6 @@ function getCwd() {
 }
 
 // ### END https://github.com/Tyriar/vscode-terminal-here ###
-
-// https://stackoverflow.com/a/14210948
-function getMatches(string: string, regex: RegExp, index: number = 0) {
-    var matches = [];
-    var match;
-    while (match = regex.exec(string)) {
-        matches.push(match[index]);
-    }
-    return matches;
-}
 
 // this method is called when your extension is deactivated
 export function deactivate() {
