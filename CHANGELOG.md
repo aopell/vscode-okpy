@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0 - 2018-10-03
+### Added
+- Support for test names with number ranges
+
 ## 1.4.0 - 2018-10-02
 ### Added
 - Support for doctests of class methods

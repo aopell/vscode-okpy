@@ -94,22 +94,53 @@ async function getQuestion(locked = false) {
             });
             let additionalTests: QuickPickTestItem[] = [];
             for (let i = 0; i < tests.length; i++) {
-                let matches = tests[i].label.match(/(.*\/)?(\w+).py:?([\w\.]+)?/)!;
-                if (matches[3]) {
-                    tests[i].label = "$(code) " + matches[3];
-                    tests[i].test = matches[3];
+                let matches: any = tests[i].label.match(/(.*\/)?(\w+|(\w*)\[(\d)-(\d)\]).py:?([\w\.]+)?/)!;
+                /*
+                    Apparently JS doesn't support named capture groups, so:
+                    1: directory
+                    2: file (filename without extension)
+                    3: numPrefix (part of the filename before the number range)
+                    4: rangeLower (inclusive lower bound of the range)
+                    5: rangeUpper (inclusive upper bound of the range)
+                    6: function (the specific function in a file to test)
+                */
+                if (matches[6]) {
+                    tests[i].label = "$(code) " + matches[6];
+                    tests[i].test = matches[6];
                     tests[i].description = matches[2] + ".py - doctest";
-                } else if (matches[2] && obj.tests[tests[i].label] === "ok_test") {
-                    let content = readFileSync(path.join(dir, `${(matches[1] || "") + matches[2]}.py`));
-                    let testLocked = content.includes("'locked': True");
-                    if (locked !== testLocked) {
-                        tests.splice(i, 1);
-                        i--;
-                    } else {
-                        tests[i].label = (testLocked ? "$(lock) " : "$(list-unordered) ") + matches[2];
-                        tests[i].test = matches[2];
-                        tests[i].description = (matches[1] || "") + matches[2] + ".py - ok test";
+                } else if (matches[3] || (matches[4] && matches[5])) {
+                    tests.splice(i, 1);
+                    i--;
+                    let min = Number.parseInt(matches[4]);
+                    let max = Number.parseInt(matches[5]);
+                    if (Number.isNaN(min) || Number.isNaN(max)) {
+                        throw Error("Invalid range tests");
                     }
+                    for (let j = min; j <= max; j++) {
+                        let fName = `${matches[3]}${j}`;
+                        let content = readFileSync(path.join(dir, `${(matches[1] || "") + fName}.py`), "utf8");
+                        let testLocked = content.includes("'locked': True");
+                        if (locked === testLocked) {
+                            additionalTests.push({
+                                label: (testLocked ? "$(lock) " : "$(list-unordered) ") + fName,
+                                test: fName,
+                                description: (matches[1] || "") + fName + ".py - ok test"
+                            });
+                        }
+                    }
+
+                } else if (matches[2] && obj.tests[tests[i].label] === "ok_test") {
+                    let content = readFileSync(path.join(dir, `${(matches[1] || "") + matches[2]}.py`), "utf8");
+                    let testLocked = content.includes("'locked': True");
+                    if (locked === testLocked) {
+                        additionalTests.push({
+                            label: (testLocked ? "$(lock) " : "$(list-unordered) ") + matches[2],
+                            test: matches[2],
+                            description: (matches[1] || "") + matches[2] + ".py - ok test"
+                        });
+                    }
+                    tests.splice(i, 1);
+                    i--;
                 } else {
                     let lines = readFileSync(path.join(dir, `${matches[2]}.py`), 'utf8').toString().split("\n");
 
@@ -155,7 +186,7 @@ async function getQuestion(locked = false) {
         if (throwErr) {
             throw err;
         } else {
-            vscode.window.showErrorMessage(err);
+            vscode.window.showErrorMessage(err.message);
         }
     }
 
