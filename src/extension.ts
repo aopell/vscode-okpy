@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('okpy.questionUnlock', async () => {
             let result = await getQuestion(true);
             let okterm = getTerminal();
-            okterm.sendText(`python3 ok -q ${result} -u`);
+            okterm.sendText(`python3 ok -q ${result}`);
         }),
         vscode.commands.registerCommand('okpy.allUnlock', async () => {
             let okterm = getTerminal();
@@ -76,11 +76,11 @@ interface QuickPickTestItem extends vscode.QuickPickItem {
     test: string;
 }
 
-async function getQuestion(locked = false) {
+async function getQuestion(locked = false): Promise<string> {
 
     let dir = getCwd();
     if (!dir) {
-        return;
+        throw Error("Unable to obtain current working directory");
     }
     let okFile = readdirSync(dir).find(x => x.endsWith(".ok"));
 
@@ -93,6 +93,7 @@ async function getQuestion(locked = false) {
                 return { label: x, description: " - ok test", test: x };
             });
             let additionalTests: QuickPickTestItem[] = [];
+            let oppositeLocked = 0;
             for (let i = 0; i < tests.length; i++) {
                 let matches: any = tests[i].label.match(/(.*\/)?(\w+|(\w*)\[(\d)-(\d)\]).py:?([\w\.]+)?/)!;
                 /*
@@ -104,7 +105,7 @@ async function getQuestion(locked = false) {
                     5: rangeUpper (inclusive upper bound of the range)
                     6: function (the specific function in a file to test)
                 */
-                if (matches[6]) {
+                if (!locked && matches[6]) {
                     tests[i].label = "$(code) " + matches[6];
                     tests[i].test = matches[6];
                     tests[i].description = matches[2] + ".py - doctest";
@@ -138,10 +139,12 @@ async function getQuestion(locked = false) {
                             test: matches[2],
                             description: (matches[1] || "") + matches[2] + ".py - ok test"
                         });
+                    } else {
+                        oppositeLocked++;
                     }
                     tests.splice(i, 1);
                     i--;
-                } else {
+                } else if (!locked) {
                     let lines = readFileSync(path.join(dir, `${matches[2]}.py`), 'utf8').toString().split("\n");
 
                     let prevIndent = 0;
@@ -154,6 +157,7 @@ async function getQuestion(locked = false) {
                             currentClass = "";
                             if (className) {
                                 currentClass = className;
+                                additionalTests.push({ label: "$(file-code) " + className, description: `${matches[2]}.py - doctest`, test: className });
                             } else if (funcName) {
                                 additionalTests.push({ label: "$(code) " + funcName, description: `${matches[2]}.py - doctest`, test: funcName });
                             }
@@ -165,18 +169,25 @@ async function getQuestion(locked = false) {
                     }
                     tests.splice(i, 1);
                     i--;
+                } else {
+                    oppositeLocked++;
+                    tests.splice(i, 1);
+                    i--;
                 }
             }
 
             tests.push(...additionalTests);
+            tests.push({ label: `$(${locked ? "key" : "lock"}) ${oppositeLocked} ${locked ? "un" : ""}locked tests`, description: "Select to view", test: "vscode-okpy.oppositeLocked" });
 
-            if (tests.length > 0) {
+            if (tests.length > 0 || oppositeLocked) {
                 const test = await vscode.window.showQuickPick(tests, { matchOnDescription: true });
                 if (!test) {
                     throwErr = true;
                     throw new Error("No question provided");
+                } else if (test.test === "vscode-okpy.oppositeLocked") {
+                    return getQuestion(!locked);
                 }
-                return test.test;
+                return test.test + (locked ? " -u" : "");
             } else {
                 throw new Error(`There are no ${!locked ? "un" : ""}locked tests`);
             }
@@ -199,7 +210,7 @@ async function getQuestion(locked = false) {
         throw new Error("No question provided");
     }
 
-    return result;
+    return result + (locked ? " -u" : "");
 }
 
 function getTerminal(name = TERM_NAME, setCwd = true, setFocus = true) {

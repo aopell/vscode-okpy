@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0 - 2018-10-10
+### Added
+- Support for doctests on classes
+- QuickPick entry to view unlocked tests when viewing locked tests
+- QuickPick entry to view locked tests when viewing unlocked tests
+
 ## 1.5.0 - 2018-10-03
 ### Added
 - Support for test names with number ranges
