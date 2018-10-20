@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1 - 2018-10-20
+### Fixed
+- Fixed loading tests in files with names containing non-word characters
+
 ## 1.6.0 - 2018-10-10
 ### Added
 - Support for doctests on classes

@@ -95,7 +95,7 @@ async function getQuestion(locked = false): Promise<string> {
             let additionalTests: QuickPickTestItem[] = [];
             let oppositeLocked = 0;
             for (let i = 0; i < tests.length; i++) {
-                let matches: any = tests[i].label.match(/(.*\/)?(\w+|(\w*)\[(\d)-(\d)\]).py:?([\w\.]+)?/)!;
+                let matches: any = tests[i].label.match(/(.*\/)?([\w\-. ]+|(\w*)\[(\d)-(\d)\]).py:?([\w\.]+)?/)!;
                 /*
                     Apparently JS doesn't support named capture groups, so:
                     1: directory
