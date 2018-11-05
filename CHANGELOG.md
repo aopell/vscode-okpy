@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.0 - 2018-11-04
+### Added
+- Support for Scheme tests
+
 ## 1.6.1 - 2018-10-20
 ### Fixed
 - Fixed loading tests in files with names containing non-word characters

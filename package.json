@@ -2,7 +2,7 @@
     "name": "vscode-okpy",
     "displayName": "VSCode okpy",
     "description": "Provides support for the ok Python autograder",
-    "version": "1.6.1",
+    "version": "1.7.0",
     "publisher": "aopell",
     "icon": "img/icon.png",
     "engines": {

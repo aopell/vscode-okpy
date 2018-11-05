@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import * as os from 'os';
 import path = require('path');
 import { readdirSync, readFileSync } from 'fs';
+import { QuickPickTestItem, OkFile, TestType } from './ok-interfaces';
 
 const TERM_NAME = "python - ok";
 
@@ -72,10 +73,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
 }
 
-interface QuickPickTestItem extends vscode.QuickPickItem {
-    test: string;
-}
-
 async function getQuestion(locked = false): Promise<string> {
 
     let dir = getCwd();
@@ -87,7 +84,7 @@ async function getQuestion(locked = false): Promise<string> {
     let throwErr = false;
     try {
         if (okFile) {
-            let obj = JSON.parse(readFileSync(path.join(dir, okFile), 'utf8'));
+            let obj: OkFile = JSON.parse(readFileSync(path.join(dir, okFile), 'utf8'));
             let testStrings = Object.keys(obj.tests);
             let tests: QuickPickTestItem[] = testStrings.map(function (x) {
                 return { label: x, description: " - ok test", test: x };
@@ -95,7 +92,10 @@ async function getQuestion(locked = false): Promise<string> {
             let additionalTests: QuickPickTestItem[] = [];
             let oppositeLocked = 0;
             for (let i = 0; i < tests.length; i++) {
-                let matches: any = tests[i].label.match(/(.*\/)?([\w\-. ]+|(\w*)\[(\d)-(\d)\]).py:?([\w\.]+)?/)!;
+                let matches: any = tests[i].label.match(/(.*\/)?([\w\-. ]+|(\w*)\[(\d)-(\d)\])(\.py|\.scm):?([\w\.]+)?/)!;
+                if (!matches) {
+                    throw new Error(`Unable to process test: "${tests[i].label}"`);
+                }
                 /*
                     Apparently JS doesn't support named capture groups, so:
                     1: directory
@@ -103,12 +103,33 @@ async function getQuestion(locked = false): Promise<string> {
                     3: numPrefix (part of the filename before the number range)
                     4: rangeLower (inclusive lower bound of the range)
                     5: rangeUpper (inclusive upper bound of the range)
-                    6: function (the specific function in a file to test)
+                    6: fileExtension ('.py' or '.scm')
+                    7: function (the specific function in a file to test)
                 */
-                if (!locked && matches[6]) {
-                    tests[i].label = "$(code) " + matches[6];
-                    tests[i].test = matches[6];
-                    tests[i].description = matches[2] + ".py - doctest";
+                if (matches[7] && obj.tests[tests[i].label] === TestType.doctest) {
+                    if (!locked) {
+                        additionalTests.push({
+                            label: "$(code) " + matches[7],
+                            test: matches[7],
+                            description: matches[2] + ".py - doctest"
+                        });
+                    } else {
+                        oppositeLocked++;
+                    }
+                    tests.splice(i, 1);
+                    i--;
+                } else if (obj.tests[tests[i].label] === TestType.scheme_test) {
+                    if (!locked) {
+                        additionalTests.push({
+                            label: "$(code) " + matches[2] + matches[6],
+                            test: matches[2] + matches[6],
+                            description: "scheme test"
+                        });
+                    } else {
+                        oppositeLocked++;
+                    }
+                    tests.splice(i, 1);
+                    i--;
                 } else if (matches[3] || (matches[4] && matches[5])) {
                     tests.splice(i, 1);
                     i--;
@@ -130,7 +151,7 @@ async function getQuestion(locked = false): Promise<string> {
                         }
                     }
 
-                } else if (matches[2] && obj.tests[tests[i].label] === "ok_test") {
+                } else if (matches[2] && obj.tests[tests[i].label] === TestType.ok_test) {
                     let content = readFileSync(path.join(dir, `${(matches[1] || "") + matches[2]}.py`), "utf8");
                     let testLocked = content.includes("'locked': True");
                     if (locked === testLocked) {
